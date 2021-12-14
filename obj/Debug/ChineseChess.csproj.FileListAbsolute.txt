@@ -1,0 +1,12 @@
+C:\Users\nguye\source\repos\ChineseChess\bin\Debug\ChineseChess.exe.config
+C:\Users\nguye\source\repos\ChineseChess\bin\Debug\ChineseChess.exe
+C:\Users\nguye\source\repos\ChineseChess\bin\Debug\ChineseChess.pdb
+C:\Users\nguye\source\repos\ChineseChess\obj\Debug\ChineseChess.csproj.AssemblyReference.cache
+C:\Users\nguye\source\repos\ChineseChess\obj\Debug\ChineseChess.csproj.SuggestedBindingRedirects.cache
+C:\Users\nguye\source\repos\ChineseChess\obj\Debug\ChineseChess.Main.resources
+C:\Users\nguye\source\repos\ChineseChess\obj\Debug\ChineseChess.NewGameDialog.resources
+C:\Users\nguye\source\repos\ChineseChess\obj\Debug\ChineseChess.Properties.Resources.resources
+C:\Users\nguye\source\repos\ChineseChess\obj\Debug\ChineseChess.csproj.GenerateResource.cache
+C:\Users\nguye\source\repos\ChineseChess\obj\Debug\ChineseChess.csproj.CoreCompileInputs.cache
+C:\Users\nguye\source\repos\ChineseChess\obj\Debug\ChineseChess.exe
+C:\Users\nguye\source\repos\ChineseChess\obj\Debug\ChineseChess.pdb
