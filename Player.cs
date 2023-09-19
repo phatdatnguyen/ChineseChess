@@ -1,17 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ChineseChess
+﻿namespace ChineseChess
 {
     public class Player
     {
         #region Fields
-        private string name;
-        private Board.Side side;
-        private bool isAI;
+        private readonly string name;
+        private readonly Board.Side side;
+        private readonly bool isAI;
         #endregion
 
         #region Properties

@@ -1,17 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ChineseChess
+﻿namespace ChineseChess
 {
     class Cannon : Piece
     {
         #region Contructor
-        public Cannon(Board board, Board.Side side, int rank, int file) : base(board, side, rank, file)
+        public Cannon(Board board, Board.Side side, int rank, int file) : base("Cannon", board, side, rank, file)
         {
-            name = "Cannon";
             if (side == Board.Side.Blue)
                 image.Image = Properties.Resources.BlueCannon;
             else
@@ -21,7 +14,7 @@ namespace ChineseChess
         }
         #endregion
 
-        #region Event handlers
+        #region Methods
         public void OnSelectionChanged(Object sender, EventArgs e)
         {
             if (IsSelected)
@@ -39,14 +32,12 @@ namespace ChineseChess
                     image.Image = Properties.Resources.RedCannon;
             }
         }
-        #endregion
-
-        #region Methods
+        
         public override List<Move> FindPossibleMoves()
         {
-            List<Move> possibleMoves = new List<Move>();
+            List<Move> possibleMoves = new();
             Cell targetCell;
-            Piece screen = null;
+            Piece? screen = null;
             int targetColumn;
             int targetRow;
 
@@ -57,9 +48,9 @@ namespace ChineseChess
                 while (targetColumn >= 0)
                 {
                     targetCell = board.Cells[rank, targetColumn];
-                    if (targetCell.IsEmpty)
+                    if (targetCell.Piece == null)
                     {
-                        possibleMoves.Add(new Move(rank, file, rank, targetColumn, this, targetCell.Piece));
+                        possibleMoves.Add(new Move(rank, file, rank, targetColumn, this));
                     }
                     else
                     {
@@ -75,7 +66,7 @@ namespace ChineseChess
                     while (targetColumn >= 0)
                     {
                         targetCell = board.Cells[rank, targetColumn];
-                        if (!targetCell.IsEmpty)
+                        if (targetCell.Piece != null)
                         {
                             if (targetCell.Piece.Side != side)
                                 possibleMoves.Add(new Move(rank, file, rank, targetColumn, this, targetCell.Piece));
@@ -94,9 +85,9 @@ namespace ChineseChess
                 while (targetColumn <= 8)
                 {
                     targetCell = board.Cells[rank, targetColumn];
-                    if (targetCell.IsEmpty)
+                    if (targetCell.Piece == null)
                     {
-                        possibleMoves.Add(new Move(rank, file, rank, targetColumn, this, targetCell.Piece));
+                        possibleMoves.Add(new Move(rank, file, rank, targetColumn, this));
                     }
                     else
                     {
@@ -111,7 +102,7 @@ namespace ChineseChess
                     while (targetColumn <= 8)
                     {
                         targetCell = board.Cells[rank, targetColumn];
-                        if (!targetCell.IsEmpty)
+                        if (targetCell.Piece != null)
                         {
                             if (targetCell.Piece.Side != side)
                                 possibleMoves.Add(new Move(rank, file, rank, targetColumn, this, targetCell.Piece));
@@ -130,9 +121,9 @@ namespace ChineseChess
                 while (targetRow >= 0)
                 {
                     targetCell = board.Cells[targetRow, file];
-                    if (targetCell.IsEmpty)
+                    if (targetCell.Piece == null)
                     {
-                        possibleMoves.Add(new Move(rank, file, targetRow, file, this, targetCell.Piece));
+                        possibleMoves.Add(new Move(rank, file, targetRow, file, this));
                     }
                     else
                     {
@@ -147,7 +138,7 @@ namespace ChineseChess
                     while (targetRow >= 0)
                     {
                         targetCell = board.Cells[targetRow, file];
-                        if (!targetCell.IsEmpty)
+                        if (targetCell.Piece != null)
                         {
                             if (targetCell.Piece.Side != side)
                                 possibleMoves.Add(new Move(rank, file, targetRow, file, this, targetCell.Piece));
@@ -166,9 +157,9 @@ namespace ChineseChess
                 while (targetRow <= 9)
                 {
                     targetCell = board.Cells[targetRow, file];
-                    if (targetCell.IsEmpty)
+                    if (targetCell.Piece == null)
                     {
-                        possibleMoves.Add(new Move(rank, file, targetRow, file, this, targetCell.Piece));
+                        possibleMoves.Add(new Move(rank, file, targetRow, file, this));
                     }
                     else
                     {
@@ -183,7 +174,7 @@ namespace ChineseChess
                     while (targetRow <= 9)
                     {
                         targetCell = board.Cells[targetRow, file];
-                        if (!targetCell.IsEmpty)
+                        if (targetCell.Piece != null)
                         {
                             if (targetCell.Piece.Side != side)
                                 possibleMoves.Add(new Move(rank, file, targetRow, file, this, targetCell.Piece));
@@ -192,7 +183,6 @@ namespace ChineseChess
                         targetRow += 1;
                     }
                 }
-                screen = null;
             }
 
             return possibleMoves;

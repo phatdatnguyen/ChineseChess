@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Drawing;
-
-namespace ChineseChess
+﻿namespace ChineseChess
 {
     public class Board
     {
@@ -15,13 +7,19 @@ namespace ChineseChess
         #endregion
 
         #region Fields
-        private Panel boardPanel;
-        private Cell[,] cells;
-        private Cell selectedCell;
+        private readonly Panel boardPanel;
+        private readonly Cell[,] cells;
+        private Cell? selectedCell;
         #endregion
 
         #region Properties
-        public Cell SelectedCell
+        public static int PieceSize { get { return 32; } }
+        public static int PossibleMoveIndicatorSize { get { return 20; } }
+        public static int PaddingTop { get { return 12; } }
+        public static int PaddingLeft { get { return 32; } }
+        public static int VerticalCellDistance { get { return 43; } }
+        public static int HorizontalCellDistance { get { return 49; } }
+        public Cell? SelectedCell
         {
             get { return selectedCell; }
             set { selectedCell = value; }
@@ -154,32 +152,32 @@ namespace ChineseChess
                     RemovePiece(move.CapturedPiece);
 
                 //Position the images
-                move.Piece.Image.Top = move.Piece.Rank * 42 + 14;
-                move.Piece.Image.Left = move.Piece.File * 42 + 23;
+                move.Piece.Image.Top = move.Piece.Rank * Board.VerticalCellDistance + Board.PaddingTop;
+                move.Piece.Image.Left = move.Piece.File * Board.HorizontalCellDistance + Board.PaddingLeft;
                 move.Piece.Image.Invalidate();
                 move.Piece.Image.Update();
 
                 //Enable undo button
-                if (Program.ChessBoard.Game.Type == Game.GameType.TwoPlayers || Program.ChessBoard.Game.Type == Game.GameType.TwoPlayersHandicap)
+                if (Program.ChessBoard != null && Program.ChessBoard.Game != null && (Program.ChessBoard.Game.Type == Game.GameType.TwoPlayers || Program.ChessBoard.Game.Type == Game.GameType.TwoPlayersHandicap))
                 {
                     Program.ChessBoard.UndoButton.Enabled = true;
                 }
                 else
                 {
-                    if (Program.ChessBoard.Game.CurrentPlayer.IsAI && Program.ChessBoard.Game.Moves.Count > 0)
+                    if (Program.ChessBoard != null && Program.ChessBoard.Game != null && (Program.ChessBoard.Game.CurrentPlayer.IsAI && Program.ChessBoard.Game.Moves.Count > 0))
                         Program.ChessBoard.UndoButton.Enabled = true;
-                    else
+                    else if (Program.ChessBoard != null)
                         Program.ChessBoard.UndoButton.Enabled = false;
                 }
 
                 //Check whether a check is delivered
-                if (IsCheckDelivered(move.Piece.Side))
+                if (Program.ChessBoard != null && IsCheckDelivered(move.Piece.Side))
                     Program.ChessBoard.StatusLabel.Text = "Check!";
-                else
+                else if (Program.ChessBoard != null)
                     Program.ChessBoard.StatusLabel.Text = "";
 
                 //Check end game
-                if (move.CapturedPiece != null && move.CapturedPiece.GetType() == typeof(General))
+                if (Program.ChessBoard != null && Program.ChessBoard.Game != null && move.CapturedPiece != null && move.CapturedPiece.GetType() == typeof(General))
                 {
                     Program.ChessBoard.Game.Status = Game.GameStatus.Ended;
                     Program.ChessBoard.UndoButton.Enabled = true;
@@ -235,11 +233,11 @@ namespace ChineseChess
 
         public List<Move> FindPossibleMoves(Side side)
         {
-            List<Move> possibleMoves = new List<Move>();
+            List<Move> possibleMoves = new();
 
             foreach (Cell cell in cells)
             {
-                if (!cell.IsEmpty && cell.Piece.Side == side)
+                if (cell.Piece != null && cell.Piece.Side == side)
                 {
                     List<Move> moves = cell.Piece.FindPossibleMoves();
                     foreach (Move move in moves)
@@ -256,7 +254,7 @@ namespace ChineseChess
 
             foreach (Cell cell in cells)
             {
-                if (!cell.IsEmpty)
+                if (cell.Piece != null)
                 {
                     if (cell.Piece.Side == side)
                         value += cell.Piece.RelativeValue;
@@ -272,7 +270,7 @@ namespace ChineseChess
         {
             foreach (Cell cell in cells)
             {
-                if (!cell.IsEmpty && cell.Piece.Side == side)
+                if (cell.Piece != null && cell.Piece.Side == side)
                 {
                     if (cell.Piece.GetType() == typeof(Chariot) || cell.Piece.GetType() == typeof(Cannon) ||
                         cell.Piece.GetType() == typeof(Horse) || cell.Piece.GetType() == typeof(Soldier))

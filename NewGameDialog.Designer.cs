@@ -108,7 +108,7 @@
             this.gameType_TwoPlayer.TabStop = true;
             this.gameType_TwoPlayer.Text = "2 players";
             this.gameType_TwoPlayer.UseVisualStyleBackColor = true;
-            this.gameType_TwoPlayer.CheckedChanged += new System.EventHandler(this.gameType_CheckedChanged);
+            this.gameType_TwoPlayer.CheckedChanged += new System.EventHandler(this.GameType_CheckedChanged);
             // 
             // playersInformationGroup
             // 

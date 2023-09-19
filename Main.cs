@@ -1,25 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-namespace ChineseChess
+﻿namespace ChineseChess
 {
     public partial class Main : Form
     {
         #region Fields
-        private Board board;
-        private Game game;
-        private NewGameDialog newGameDialog;
+        private Board? board;
+        private Game? game;
+        private readonly NewGameDialog newGameDialog;
         #endregion
 
         #region Properties
-        public Game Game
+        public Game? Game
         {
             get { return game; }
         }
@@ -50,21 +40,28 @@ namespace ChineseChess
         }
         #endregion
 
-        #region Event handlers
-        private void newGameButton_Click(object sender, EventArgs e)
+        #region Methods
+        private void Main_Load(object sender, EventArgs e)
+        {
+            NewGameButton_Click(newGameButton, EventArgs.Empty);
+        }
+
+        private void NewGameButton_Click(object sender, EventArgs e)
         {
             if (newGameDialog.ShowDialog(this) == DialogResult.OK)
             {
-                board = new Board(boardPanel);
-                game = new Game(board, newGameDialog.GameType, newGameDialog.Player1, newGameDialog.Player2);
-                if (game != null)
-                    game.Start();
+                if (newGameDialog.Player1 != null && newGameDialog.Player2 != null)
+                {
+                    board = new Board(boardPanel);
+                    game = new Game(board, newGameDialog.GameType, newGameDialog.Player1, newGameDialog.Player2);
+                    game?.Start();
+                }
             }
         }
 
-        private void undoButton_Click(object sender, EventArgs e)
+        private void UndoButton_Click(object sender, EventArgs e)
         {
-            if (game == null || game.Moves.Count == 0)
+            if (board == null || game == null || game.Moves.Count == 0)
                 return;
 
             if (game.Type == Game.GameType.TwoPlayers || game.Type == Game.GameType.TwoPlayersHandicap)
@@ -117,7 +114,7 @@ namespace ChineseChess
                         game.Moves.Remove(game.Moves.Last());
                     }
                 }
-                
+
                 if ((game.Moves.Count == 0) || (game.Moves.Count == 1 && game.Player1.IsAI))
                 {
                     undoButton.Enabled = false;
@@ -129,7 +126,7 @@ namespace ChineseChess
             //Enable all the pieces of the current player and disable all the pieces of the opposite side
             foreach (Cell cell in board.Cells)
             {
-                if (!cell.IsEmpty)
+                if (cell.Piece != null)
                 {
                     if (cell.Piece.Side == game.CurrentPlayer.Side)
                         cell.Piece.Image.Enabled = true;
@@ -139,8 +136,11 @@ namespace ChineseChess
             }
         }
 
-        private void startButton_Click(object sender, EventArgs e)
+        private void StartButton_Click(object sender, EventArgs e)
         {
+            if (board == null || game == null)
+                return;
+
             Program.ChessBoard.CurrentPlayerLabel.Text = game.Player1.Name;
             Program.ChessBoard.CurrentPlayerLabel.ForeColor = Color.Red;
             statusLabel.Text = "";
@@ -153,7 +153,7 @@ namespace ChineseChess
                     //Enable all the pieces of the current player and disable all the pieces of the opposite side
                     foreach (Cell cell in board.Cells)
                     {
-                        if (!cell.IsEmpty)
+                        if (cell.Piece != null)
                         {
                             if (cell.Piece.Side == game.CurrentPlayer.Side)
                                 cell.Piece.Image.Enabled = true;
@@ -179,7 +179,7 @@ namespace ChineseChess
                     //Enable all the pieces of the current player and disable all the pieces of the opposite side
                     foreach (Cell cell in board.Cells)
                     {
-                        if (!cell.IsEmpty)
+                        if (cell.Piece != null)
                         {
                             if (cell.Piece.Side == game.CurrentPlayer.Side)
                                 cell.Piece.Image.Enabled = true;

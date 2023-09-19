@@ -1,21 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-namespace ChineseChess
+﻿namespace ChineseChess
 {
     public partial class NewGameDialog : Form
     {
         #region Fields
         private Game.GameType gameType;
-        private Player player1;
-        private Player player2;
+        private Player? player1;
+        private Player? player2;
         #endregion
 
         #region Properties
@@ -23,11 +13,11 @@ namespace ChineseChess
         {
             get { return gameType; }
         }
-        public Player Player1
+        public Player? Player1
         {
             get { return player1; }
         }
-        public Player Player2
+        public Player? Player2
         {
             get { return player2; }
         }
@@ -40,7 +30,7 @@ namespace ChineseChess
         }
         #endregion
 
-        #region Event handlers
+        #region Methods
         private void NewGameDialog_FormClosed(object sender, FormClosedEventArgs e)
         {
             if (DialogResult == DialogResult.OK)
@@ -89,7 +79,7 @@ namespace ChineseChess
             }
         }
 
-        private void gameType_CheckedChanged(object sender, EventArgs e)
+        private void GameType_CheckedChanged(object sender, EventArgs e)
         {
             playersInformation_Player1AI.Enabled = gameType_VsAI.Checked;
             playersInformation_Player2AI.Enabled = gameType_VsAI.Checked;

@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Drawing;
-
-namespace ChineseChess
+﻿namespace ChineseChess
 {
     public class Game
     {
@@ -16,16 +8,16 @@ namespace ChineseChess
         #endregion
 
         #region Fields
-        private Board board;
-        private GameType type;
+        private readonly Board board;
+        private readonly GameType type;
         private GameStatus status;
-        private Player player1;
-        private Player player2;
+        private readonly Player player1;
+        private readonly Player player2;
         private Player currentPlayer;
         private Board.Side aiPlayerSide;
         private Board.Side humanPlayerSide;
-        private Move aiPlayerMove;
-        private List<Move> moves;
+        private Move? aiPlayerMove;
+        private readonly List<Move> moves;
         #endregion
 
         #region Properties
@@ -73,6 +65,7 @@ namespace ChineseChess
             this.type = type;
             this.player1 = player1;
             this.player2 = player2;
+            currentPlayer = player1;
             status = GameStatus.NotStarted;
             moves = new List<Move>();
             Program.ChessBoard.CurrentPlayerLabel.Text = "";
@@ -96,7 +89,7 @@ namespace ChineseChess
                     //Enable all the pieces of the current player and disable all the pieces of the opposite side
                     foreach (Cell cell in board.Cells)
                     {
-                        if (!cell.IsEmpty)
+                        if (cell.Piece != null)
                         {
                             if (cell.Piece.Side == currentPlayer.Side)
                                 cell.Piece.Image.Enabled = true;
@@ -114,7 +107,7 @@ namespace ChineseChess
                     //Enable all the pieces except generals
                     foreach (Cell cell in board.Cells)
                     {
-                        if (!cell.IsEmpty)
+                        if (cell.Piece != null)
                         {
                             if (cell.Piece.GetType() != typeof(General))
                                 cell.Piece.Image.Enabled = true;
@@ -145,7 +138,7 @@ namespace ChineseChess
                     //Enable all the pieces of the current player and disable all the pieces of the opposite side
                     foreach (Cell cell in board.Cells)
                     {
-                        if (!cell.IsEmpty)
+                        if (cell.Piece != null)
                         {
                             if (cell.Piece.Side == currentPlayer.Side)
                                 cell.Piece.Image.Enabled = true;
@@ -163,7 +156,7 @@ namespace ChineseChess
                     //Enable all the pieces except generals
                     foreach (Cell cell in board.Cells)
                     {
-                        if (!cell.IsEmpty)
+                        if (cell.Piece != null)
                         {
                             if (cell.Piece.GetType() != typeof(General))
                                 cell.Piece.Image.Enabled = true;
@@ -201,17 +194,17 @@ namespace ChineseChess
             //Declare the winner
             if (player1.Side == winSide)
             {
-                MessageBox.Show(player1.Name + " won!", "Checkmate!", MessageBoxButtons.OK);
+                MessageBox.Show(player1.Name + " won!", "Game over!", MessageBoxButtons.OK);
             }
             else
             {
-                MessageBox.Show(player2.Name + " won!", "Checkmate!", MessageBoxButtons.OK);
+                MessageBox.Show(player2.Name + " won!", "Game over!", MessageBoxButtons.OK);
             }
 
             //Disable all the pieces
             foreach (Cell cell in board.Cells)
             {
-                if (!cell.IsEmpty)
+                if (cell.Piece != null)
                 {
                     cell.Piece.Image.Enabled = false;
                 }
@@ -225,7 +218,7 @@ namespace ChineseChess
                 return board.Evaluate(side);
             }
 
-            float bestValue = float.NegativeInfinity;
+            float bestValue;
             bestValue = float.NegativeInfinity;
             List<Move> moves = board.FindPossibleMoves(side);
             foreach (Move testMove in moves)
@@ -269,13 +262,16 @@ namespace ChineseChess
         {
             //Perform the move
             AlphaBeta(aiPlayerSide, float.NegativeInfinity, float.PositiveInfinity, 4, 4);
-            board.DoMove(aiPlayerMove);
-            
-            //Add to moves list
-            moves.Add(aiPlayerMove);
+            if (aiPlayerMove != null)
+            {
+                board.DoMove(aiPlayerMove);
 
+                //Add to moves list
+                moves.Add(aiPlayerMove);
+            }
+            
             //Switch turn
-            if (Program.ChessBoard.Game.Status != Game.GameStatus.Ended)
+            if (Program.ChessBoard != null && Program.ChessBoard.Game != null && Program.ChessBoard.Game.Status != Game.GameStatus.Ended)
                 Program.ChessBoard.Game.SwitchTurn();
         }
         #endregion

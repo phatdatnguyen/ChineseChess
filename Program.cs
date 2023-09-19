@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-namespace ChineseChess
+﻿namespace ChineseChess
 {
     static class Program
     {
-        public static ChineseChess.Main ChessBoard;
+        public static Main ChessBoard;
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -17,7 +11,7 @@ namespace ChineseChess
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            ChessBoard = new ChineseChess.Main();
+            ChessBoard = new Main();
             Application.Run(ChessBoard);
         }
     }

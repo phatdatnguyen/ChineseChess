@@ -1,17 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ChineseChess
+﻿namespace ChineseChess
 {
     public class Chariot : Piece
     {
         #region Contructor
-        public Chariot(Board board, Board.Side side, int rank, int file) : base(board, side, rank, file)
+        public Chariot(Board board, Board.Side side, int rank, int file) : base("Chariot", board, side, rank, file)
         {
-            name = "Chariot";
             if (side == Board.Side.Blue)
                 image.Image = Properties.Resources.BlueChariot;
             else
@@ -21,7 +14,7 @@ namespace ChineseChess
         }
         #endregion
 
-        #region Event handlers
+        #region Methods
         public void OnSelectionChanged(Object sender, EventArgs e)
         {
             if (isSelected)
@@ -39,12 +32,10 @@ namespace ChineseChess
                     image.Image = Properties.Resources.RedChariot;
             }
         }
-        #endregion
-
-        #region Methods
+        
         public override List<Move> FindPossibleMoves()
         {
-            List<Move> possibleMoves = new List<Move>();
+            List<Move> possibleMoves = new();
             Cell targetCell;
             int targetColumn;
             int targetRow;
@@ -56,7 +47,7 @@ namespace ChineseChess
                 while (targetColumn >= 0)
                 {
                     targetCell = board.Cells[rank, targetColumn];
-                    if (targetCell.IsEmpty)
+                    if (targetCell.Piece == null)
                     {
                         possibleMoves.Add(new Move(rank, file, rank, targetColumn, this));
                     }
@@ -77,7 +68,7 @@ namespace ChineseChess
                 while (targetColumn <= 8)
                 {
                     targetCell = board.Cells[rank, targetColumn];
-                    if (targetCell.IsEmpty)
+                    if (targetCell.Piece == null)
                     {
                         possibleMoves.Add(new Move(rank, file, rank, targetColumn, this));
                     }
@@ -98,7 +89,7 @@ namespace ChineseChess
                 while (targetRow >= 0)
                 {
                     targetCell = board.Cells[targetRow, file];
-                    if (targetCell.IsEmpty)
+                    if (targetCell.Piece == null)
                     {
                         possibleMoves.Add(new Move(rank, file, targetRow, file, this));
                     }
@@ -119,7 +110,7 @@ namespace ChineseChess
                 while (targetRow <= 9)
                 {
                     targetCell = board.Cells[targetRow, file];
-                    if (targetCell.IsEmpty)
+                    if (targetCell.Piece == null)
                     {
                         possibleMoves.Add(new Move(rank, file, targetRow, file, this));
                     }

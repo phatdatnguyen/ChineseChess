@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Drawing;
+﻿using System.Data.Common;
 
 namespace ChineseChess
 {
@@ -58,7 +52,7 @@ namespace ChineseChess
                 if (value != isSelected)
                 {
                     isSelected = value;
-                    _OnSelectionChanged(EventArgs.Empty);
+                    OnSelectionChanged(EventArgs.Empty);
                 }
             }
         }
@@ -75,17 +69,17 @@ namespace ChineseChess
 
         #region Events
         public delegate void SelectionChangedEventHandler(object sender, EventArgs e);
-        public event SelectionChangedEventHandler SelectionChanged;
-        protected virtual void _OnSelectionChanged(EventArgs e)
+        public event SelectionChangedEventHandler? SelectionChanged;
+        protected virtual void OnSelectionChanged(EventArgs e)
         {
-            if (SelectionChanged != null)
-                SelectionChanged(this, e);
+            SelectionChanged?.Invoke(this, e);
         }
         #endregion
 
         #region Contructor
-        public Piece(Board board, Board.Side side, int rank, int file)
+        public Piece(string name, Board board, Board.Side side, int rank, int file)
         {
+            this.name = name;
             this.board = board;
             this.side = side;
             this.rank = rank;
@@ -94,27 +88,33 @@ namespace ChineseChess
             isCaptured = false;
             isSelected = false;
 
-            image = new PictureBox();
-            image.Width = 32;
-            image.Height = 32;
-            image.SizeMode = PictureBoxSizeMode.StretchImage;
-            image.Cursor = Cursors.Hand;
-            image.Top = rank * 42 + 14;
-            image.Left = file * 42 + 23;
-            image.BackColor = Color.Transparent;
-            image.MouseClick += new MouseEventHandler(image_MouseClick);
+            image = new PictureBox
+            {
+                Width = Board.PieceSize,
+                Height = Board.PieceSize,
+                SizeMode = PictureBoxSizeMode.StretchImage,
+                Cursor = Cursors.Hand,
+                Top = rank * Board.VerticalCellDistance + Board.PaddingTop,
+                Left = file * Board.HorizontalCellDistance + Board.PaddingLeft,
+                BackColor = Color.Transparent
+            };
+            image.MouseClick += new MouseEventHandler(Image_MouseClick);
             image.Tag = this;   //Refer to this piece using tag
         }
         #endregion
 
-        #region Event Handlers
-        protected void image_MouseClick(Object sender, MouseEventArgs e)
+        #region Methods
+        protected void Image_MouseClick(object? sender, MouseEventArgs e)
         {
+            if (Program.ChessBoard == null || Program.ChessBoard.Game == null || sender == null)
+                return;
+
             PictureBox image = (PictureBox)sender;      
-            Piece selectedPiece = (Piece)image.Tag;
+            Piece? selectedPiece = (Piece?)image.Tag;
             
             //Remove the selected piece in handicap game type
-            if ((Program.ChessBoard.Game.Type == Game.GameType.TwoPlayersHandicap || Program.ChessBoard.Game.Type == Game.GameType.TwoPlayersHandicap)
+            if (selectedPiece != null &&
+                (Program.ChessBoard.Game.Type == Game.GameType.TwoPlayersHandicap || Program.ChessBoard.Game.Type == Game.GameType.TwoPlayersHandicap)
                 && Program.ChessBoard.Game.Status == Game.GameStatus.NotStarted)
             {
                 board.RemovePiece(selectedPiece);
@@ -122,7 +122,7 @@ namespace ChineseChess
                 return;
             }
 
-            if (!board.IsSelected)
+            if (selectedPiece != null && !board.IsSelected)
             {
                 //Select the piece, find possible moves
                 selectedPiece.IsSelected = true;
@@ -135,7 +135,7 @@ namespace ChineseChess
                 //Disable all the pieces
                 foreach (Cell cell in board.Cells)
                 {
-                    if (!cell.IsEmpty)
+                    if (cell.Piece != null)
                         cell.Piece.Image.Enabled = false;
                 }
 
@@ -153,13 +153,13 @@ namespace ChineseChess
             }
             else
             {
-                if (board.SelectedCell.Piece == this) //Reselect the piece
+                if (board.SelectedCell != null && board.SelectedCell.Piece == this) //Reselect the piece
                 {
                     //Hide all the move indicators. Enable all the pieces of the current player and disable all the pieces of the opponent
                     foreach (Cell cell in board.Cells)
                     {
                         cell.PossibleMoveIndicator.Visible = false;
-                        if (!cell.IsEmpty)
+                        if (cell.Piece != null && selectedPiece != null)
                         {
                             if (cell.Piece.Side == selectedPiece.Side)
                                 cell.Piece.Image.Enabled = true;
@@ -189,7 +189,8 @@ namespace ChineseChess
                 else //Select different piece
                 {
                     //Capture
-                    board.SelectedCell.Piece.Capture(selectedPiece);
+                    if (board.SelectedCell != null && board.SelectedCell.Piece!= null && selectedPiece != null)
+                        board.SelectedCell.Piece.Capture(selectedPiece);
 
                     if (Program.ChessBoard.Game.Status != Game.GameStatus.Ended)
                     {
@@ -199,7 +200,7 @@ namespace ChineseChess
                         //Enable all the pieces of the current player and disable all the pieces of the opposite side
                         foreach (Cell cell in board.Cells)
                         {
-                            if (!cell.IsEmpty)
+                            if (cell.Piece != null)
                             {
                                 if (cell.Piece.Side == Program.ChessBoard.Game.CurrentPlayer.Side)
                                     cell.Piece.Image.Enabled = true;
@@ -211,9 +212,7 @@ namespace ChineseChess
                 }
             }
         }
-        #endregion
-
-        #region Methods
+       
         public virtual List<Move> FindPossibleMoves()
         {
             return new List<Move>();
@@ -230,9 +229,10 @@ namespace ChineseChess
             
             //Perform the move
             board.DoMove(move);
-            
+
             //Add to moves list
-            Program.ChessBoard.Game.Moves.Add(move);
+            if (Program.ChessBoard != null && Program.ChessBoard.Game != null)
+                Program.ChessBoard.Game.Moves.Add(move);
         }
 
         public void Capture(Piece piece)
@@ -248,7 +248,8 @@ namespace ChineseChess
             board.DoMove(move);
 
             //Add to moves list
-            Program.ChessBoard.Game.Moves.Add(move);
+            if (Program.ChessBoard != null && Program.ChessBoard.Game != null)
+                Program.ChessBoard.Game.Moves.Add(move);
         }
         #endregion
     }

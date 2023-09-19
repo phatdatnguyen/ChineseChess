@@ -1,21 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Drawing;
-
-namespace ChineseChess
+﻿namespace ChineseChess
 {
     public class Cell
     {
         #region Fields
-        private Board board;
-        private int row;
-        private int column;
-        private Piece piece;
-        private PictureBox possibleMoveIndicator;
+        private readonly Board board;
+        private readonly int row;
+        private readonly int column;
+        private Piece? piece;
+        private readonly PictureBox possibleMoveIndicator;
         #endregion
 
         #region Properties
@@ -31,14 +23,10 @@ namespace ChineseChess
         {
             get { return column; }
         }
-        public Piece Piece
+        public Piece? Piece
         {
             get { return piece; }
             set { piece = value; }
-        }
-        public bool IsEmpty
-        {
-            get { return piece == null; }
         }
         public PictureBox PossibleMoveIndicator
         {
@@ -47,31 +35,37 @@ namespace ChineseChess
         #endregion
 
         #region Constructor
-        public Cell(Board board, int row, int column, Piece piece = null)
+        public Cell(Board board, int row, int column, Piece? piece = null)
         {
             this.board = board;
             this.row = row;
             this.column = column;
             this.piece = piece;
 
-            possibleMoveIndicator = new PictureBox();
-            possibleMoveIndicator.Width = 20;
-            possibleMoveIndicator.Height = 20;
-            possibleMoveIndicator.SizeMode = PictureBoxSizeMode.StretchImage;
-            possibleMoveIndicator.BackColor = Color.Transparent;
-            possibleMoveIndicator.Top = row * 42 + 20;
-            possibleMoveIndicator.Left = column * 42 + 30;
-            possibleMoveIndicator.Cursor = Cursors.Hand;
-            possibleMoveIndicator.Image = Properties.Resources.PossibleMoveIndicator;
-            possibleMoveIndicator.Visible = false;
-            possibleMoveIndicator.MouseClick += new MouseEventHandler(possibleMoveIndicator_MouseClick);
+            possibleMoveIndicator = new PictureBox
+            {
+                Width = Board.PossibleMoveIndicatorSize,
+                Height = Board.PossibleMoveIndicatorSize,
+                SizeMode = PictureBoxSizeMode.StretchImage,
+                BackColor = Color.Transparent,
+                Top = row * Board.VerticalCellDistance + Board.PaddingTop + (Board.PieceSize - Board.PossibleMoveIndicatorSize) / 2,
+                Left = column * Board.HorizontalCellDistance + Board.PaddingLeft + (Board.PieceSize - Board.PossibleMoveIndicatorSize) / 2,
+                Cursor = Cursors.Hand,
+                Image = Properties.Resources.PossibleMoveIndicator,
+                Visible = false
+            };
+            possibleMoveIndicator.MouseClick += new MouseEventHandler(PossibleMoveIndicator_MouseClick);
         }
         #endregion
 
-        #region Event handlers
-        private void possibleMoveIndicator_MouseClick(Object sender, MouseEventArgs e)
+        #region Method
+        private void PossibleMoveIndicator_MouseClick(object? sender, MouseEventArgs e)
         {
+            if (Program.ChessBoard == null || Program.ChessBoard.Game == null)
+                return;
+
             //Move
+            if (board.SelectedCell != null && board.SelectedCell.Piece != null)
             board.SelectedCell.Piece.Move(row, column);
             
             //Switch turn
@@ -80,7 +74,7 @@ namespace ChineseChess
             //Enable all the pieces of the current player and disable all the pieces of the opponent
             foreach (Cell cell in board.Cells)
             {
-                if (!cell.IsEmpty)
+                if (cell.Piece != null)
                 {
                     if (cell.Piece.Side == Program.ChessBoard.Game.CurrentPlayer.Side)
                         cell.Piece.Image.Enabled = true;

@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ChineseChess
+﻿namespace ChineseChess
 {
     [Serializable]
     public class Move
     {
         #region Fields
-        private int startRow;
-        private int startColumn;
-        private int endRow;
-        private int endColumn;
-        private Piece piece;
-        private Piece capturedPiece;
+        private readonly int startRow;
+        private readonly int startColumn;
+        private readonly int endRow;
+        private readonly int endColumn;
+        private readonly Piece piece;
+        private readonly Piece? capturedPiece;
         #endregion
 
         #region Properties
@@ -39,14 +33,14 @@ namespace ChineseChess
         {
             get { return piece; }
         }
-        public Piece CapturedPiece
+        public Piece? CapturedPiece
         {
             get { return capturedPiece; }
         }
         #endregion
 
-        #region Constructors
-        public Move(int startRow, int startColumn, int endRow, int endColumn, Piece piece, Piece capturedPiece = null, bool isTestMove = false)
+        #region Constructor
+        public Move(int startRow, int startColumn, int endRow, int endColumn, Piece piece, Piece? capturedPiece = null)
         {
             this.startRow = startRow;
             this.startColumn = startColumn;
