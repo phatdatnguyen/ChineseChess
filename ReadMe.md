@@ -7,7 +7,9 @@
   
 Chinese Chess (or Xiangqi) is a strategy board game for two players. The game represents a battle between two armies, with the objective of capturing the enemy's general.
 
-In this program, we can play 1 vs 1 or against AI. The AI is based on minimax algorithm with alpha-beta pruning at a very simple level which can easily be extended. This is just an illustration of implementing minimax method for AI decision making in board game.
+![Main window](/Images/MainWindow.png)
+
+In this program, we can play 1 vs. 1 or against AI. The AI is based on minimax algorithm with alpha-beta pruning.
  
 For more information, please visit the links below.
 
