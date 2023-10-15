@@ -222,8 +222,8 @@
                 selectedCell = null;
                 
                 //Position the images
-                move.Piece.Image.Top = move.Piece.Rank * 42 + 14;
-                move.Piece.Image.Left = move.Piece.File * 42 + 23;
+                move.Piece.Image.Top = move.Piece.Rank * Board.VerticalCellDistance + Board.PaddingTop;
+                move.Piece.Image.Left = move.Piece.File * Board.HorizontalCellDistance + Board.PaddingLeft;
 
                 //Add the captured piece
                 if (move.CapturedPiece != null)
