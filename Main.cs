@@ -53,7 +53,7 @@
                 if (newGameDialog.Player1 != null && newGameDialog.Player2 != null)
                 {
                     board = new Board(boardPanel);
-                    game = new Game(board, newGameDialog.GameType, newGameDialog.Player1, newGameDialog.Player2);
+                    game = new Game(board, newGameDialog.GameType, newGameDialog.Player1, newGameDialog.Player2, newGameDialog.AIDifficulty);
                     game?.Start();
                 }
             }

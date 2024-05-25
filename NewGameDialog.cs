@@ -6,6 +6,7 @@
         private Game.GameType gameType;
         private Player? player1;
         private Player? player2;
+        private Game.AIDifficulty aiDifficulty = Game.AIDifficulty.Medium;
         #endregion
 
         #region Properties
@@ -21,12 +22,18 @@
         {
             get { return player2; }
         }
+        public Game.AIDifficulty AIDifficulty
+        {
+            get { return aiDifficulty; }
+        }
         #endregion
 
         #region Constructor
         public NewGameDialog()
         {
             InitializeComponent();
+
+            gameType_AIDifficulty.SelectedIndex = 1;
         }
         #endregion
 
@@ -76,6 +83,18 @@
                     else
                         player2 = new Player("Player 2", Board.Side.Blue, playersInformation_Player2AI.Checked);
                 }
+
+                switch (gameType_AIDifficulty.SelectedIndex)
+                {
+                    case 0:
+                        aiDifficulty = Game.AIDifficulty.Easy; break;
+                    case 1:
+                        aiDifficulty = Game.AIDifficulty.Medium; break;
+                    case 2:
+                        aiDifficulty = Game.AIDifficulty.Hard; break;
+                    case 3:
+                        aiDifficulty = Game.AIDifficulty.Extreme; break;
+                }
             }
         }
 
@@ -83,6 +102,7 @@
         {
             playersInformation_Player1AI.Enabled = gameType_VsAI.Checked;
             playersInformation_Player2AI.Enabled = gameType_VsAI.Checked;
+            gameType_AIDifficulty.Enabled = gameType_VsAI.Checked;
         }
         #endregion
     }

@@ -1,10 +1,14 @@
-﻿namespace ChineseChess
+﻿using System.Diagnostics;
+using System.Net.Http.Headers;
+
+namespace ChineseChess
 {
     public class Game
     {
         #region Enums
         public enum GameType { TwoPlayers, TwoPlayersHandicap, VsAI, VsAIHandicap }
         public enum GameStatus { NotStarted, Started, Ended }
+        public enum AIDifficulty { Easy, Medium, Hard, Extreme }
         #endregion
 
         #region Fields
@@ -18,6 +22,7 @@
         private Board.Side humanPlayerSide;
         private Move? aiPlayerMove;
         private readonly List<Move> moves;
+        private AIDifficulty aiDifficulty;
         #endregion
 
         #region Properties
@@ -56,15 +61,20 @@
         {
             get { return moves; }
         }
+        public AIDifficulty Difficulty
+        {
+            get { return aiDifficulty; }
+        }
         #endregion
 
         #region Constructor
-        public Game(Board board, GameType type, Player player1, Player player2)
+        public Game(Board board, GameType type, Player player1, Player player2, AIDifficulty Difficulty)
         {
             this.board = board;
             this.type = type;
             this.player1 = player1;
             this.player2 = player2;
+            aiDifficulty = Difficulty;
             currentPlayer = player1;
             status = GameStatus.NotStarted;
             moves = new List<Move>();
@@ -260,8 +270,22 @@
 
         public void AIPlayerMove()
         {
+            //Set the depth
+            byte depth = 0;
+            switch (aiDifficulty)
+            {
+                case AIDifficulty.Easy:
+                    depth = 2; break;
+                case AIDifficulty.Medium:
+                    depth = 3; break;
+                case AIDifficulty.Hard:
+                    depth = 4; break;
+                case AIDifficulty.Extreme:
+                    depth = 5; break;
+            }
+
             //Perform the move
-            AlphaBeta(aiPlayerSide, float.NegativeInfinity, float.PositiveInfinity, 4, 4);
+            AlphaBeta(aiPlayerSide, float.NegativeInfinity, float.PositiveInfinity, depth, depth);
             if (aiPlayerMove != null)
             {
                 board.DoMove(aiPlayerMove);

@@ -14,7 +14,8 @@ In this program, we can play 1 vs. 1 or against AI. The AI is based on minimax a
 For more information, please visit the links below.
 
 ### Links
- 
+
+* [Download](https://github.com/phatdatnguyen/ChineseChess/releases/)
 * [Xiangqi](https://en.wikipedia.org/wiki/Xiangqi)
 * [Minimax algorithm](https://en.wikipedia.org/wiki/Minimax)
 * [Alpha–beta pruning](https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning)
