@@ -1,6 +1,4 @@
-﻿using System.Data.Common;
-
-namespace ChineseChess
+﻿namespace ChineseChess
 {
     public class Piece
     {
@@ -114,7 +112,7 @@ namespace ChineseChess
             
             //Remove the selected piece in handicap game type
             if (selectedPiece != null &&
-                (Program.ChessBoard.Game.Type == Game.GameType.TwoPlayersHandicap || Program.ChessBoard.Game.Type == Game.GameType.TwoPlayersHandicap)
+                (Program.ChessBoard.Game.Type == Game.GameType.TwoPlayersHandicap || Program.ChessBoard.Game.Type == Game.GameType.VsAIHandicap)
                 && Program.ChessBoard.Game.Status == Game.GameStatus.NotStarted)
             {
                 board.RemovePiece(selectedPiece);
@@ -221,11 +219,7 @@ namespace ChineseChess
         public void Move(int row, int column)
         {
             //Create the move
-            Move move;
-            if (side == Board.Side.Blue)
-                move = new Move(rank, file, row, column, this);
-            else
-                move = new Move(rank, file, row, column, this);
+            Move move = new Move(rank, file, row, column, this);
             
             //Perform the move
             board.DoMove(move);
@@ -238,11 +232,7 @@ namespace ChineseChess
         public void Capture(Piece piece)
         {
             //Create the move
-            Move move;
-            if (side == Board.Side.Blue)
-                move = new Move(rank, file, piece.Rank, piece.File, this, piece);
-            else
-                move = new Move(rank, file, piece.Rank, piece.File, this, piece);
+            Move move = new Move(rank, file, piece.Rank, piece.File, this, piece);
             
             //Perform the move
             board.DoMove(move);

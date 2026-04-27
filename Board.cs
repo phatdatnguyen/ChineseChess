@@ -220,7 +220,7 @@
                 //Deselect
                 move.Piece.IsSelected = false;
                 selectedCell = null;
-                
+
                 //Position the images
                 move.Piece.Image.Top = move.Piece.Rank * Board.VerticalCellDistance + Board.PaddingTop;
                 move.Piece.Image.Left = move.Piece.File * Board.HorizontalCellDistance + Board.PaddingLeft;
@@ -228,6 +228,13 @@
                 //Add the captured piece
                 if (move.CapturedPiece != null)
                     AddPiece(move.CapturedPiece);
+
+                //Update check status label to reflect restored position
+                if (Program.ChessBoard != null)
+                {
+                    Side opponentSide = move.Piece.Side == Side.Red ? Side.Blue : Side.Red;
+                    Program.ChessBoard.StatusLabel.Text = IsCheckDelivered(opponentSide) ? "Check!" : "";
+                }
             }
         }
 
