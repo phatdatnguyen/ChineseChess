@@ -13,9 +13,11 @@
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
+            if (disposing)
             {
-                components.Dispose();
+                board?.Dispose();
+                newGameDialog?.Dispose();
+                components?.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -145,7 +147,7 @@
             MaximizeBox = false;
             Name = "Main";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "Chiness Chess";
+            Text = "Chinese Chess";
             Load += Main_Load;
             controlGroup.ResumeLayout(false);
             statusGroup.ResumeLayout(false);

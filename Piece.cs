@@ -104,31 +104,49 @@
         #region Methods
         protected void Image_MouseClick(object? sender, MouseEventArgs e)
         {
-            if (Program.ChessBoard == null || Program.ChessBoard.Game == null || sender == null)
+            Main? main = Program.ChessBoard;
+            Game? game = main?.Game;
+            if (e.Button != MouseButtons.Left || main == null || game == null
+                || sender is not PictureBox clickedImage || clickedImage.Tag is not Piece selectedPiece)
                 return;
 
-            PictureBox image = (PictureBox)sender;      
-            Piece? selectedPiece = (Piece?)image.Tag;
-            
             //Remove the selected piece in handicap game type
-            if (selectedPiece != null &&
-                (Program.ChessBoard.Game.Type == Game.GameType.TwoPlayersHandicap || Program.ChessBoard.Game.Type == Game.GameType.VsAIHandicap)
-                && Program.ChessBoard.Game.Status == Game.GameStatus.NotStarted)
+            if ((game.Type == Game.GameType.TwoPlayersHandicap || game.Type == Game.GameType.VsAIHandicap)
+                && game.Status == Game.GameStatus.NotStarted)
             {
-                board.RemovePiece(selectedPiece);
+                if (selectedPiece is General)
+                    return;
+
                 board.Cells[selectedPiece.Rank, selectedPiece.File].Piece = null;
+                if (board.IsCheckDelivered(Board.Side.Red) || board.IsCheckDelivered(Board.Side.Blue))
+                {
+                    board.Cells[selectedPiece.Rank, selectedPiece.File].Piece = selectedPiece;
+                    main.StatusLabel.Text = "That piece must stay to keep the generals protected.";
+                    return;
+                }
+
+                board.RemovePiece(selectedPiece);
+                selectedPiece.IsCaptured = true;
+                selectedPiece.Image.Dispose();
+                main.StatusLabel.Text = "Choose the pieces to remove and press Start.";
                 return;
             }
 
-            if (selectedPiece != null && !board.IsSelected)
+            if (game.Status != Game.GameStatus.Started || game.CurrentPlayer.IsAI)
+                return;
+
+            if (!board.IsSelected)
             {
+                if (selectedPiece.Side != game.CurrentPlayer.Side)
+                    return;
+
                 //Select the piece, find possible moves
                 selectedPiece.IsSelected = true;
                 board.SelectedCell = board.Cells[selectedPiece.Rank, selectedPiece.File];
-                List<Move> possibleMoves = selectedPiece.FindPossibleMoves();
+                List<Move> possibleMoves = board.FindLegalMoves(selectedPiece);
 
                 //Disable undo button
-                Program.ChessBoard.UndoButton.Enabled = false;
+                main.UndoButton.Enabled = false;
 
                 //Disable all the pieces
                 foreach (Cell cell in board.Cells)
@@ -151,62 +169,28 @@
             }
             else
             {
-                if (board.SelectedCell != null && board.SelectedCell.Piece == this) //Reselect the piece
+                if (board.SelectedCell != null && board.SelectedCell.Piece == selectedPiece) //Reselect the piece
                 {
-                    //Hide all the move indicators. Enable all the pieces of the current player and disable all the pieces of the opponent
+                    //Hide all the move indicators.
                     foreach (Cell cell in board.Cells)
-                    {
                         cell.PossibleMoveIndicator.Visible = false;
-                        if (cell.Piece != null && selectedPiece != null)
-                        {
-                            if (cell.Piece.Side == selectedPiece.Side)
-                                cell.Piece.Image.Enabled = true;
-                            else
-                                cell.Piece.Image.Enabled = false;
-                        }
-                    }
 
                     //Deselect the piece
                     board.SelectedCell.Piece.IsSelected = false;
                     board.SelectedCell = null;
-
-                    //Enable undo button
-                    if (Program.ChessBoard.Game.Type == Game.GameType.TwoPlayers || Program.ChessBoard.Game.Type == Game.GameType.TwoPlayersHandicap)
-                    {
-                        if (Program.ChessBoard.Game.Moves.Count > 0)
-                            Program.ChessBoard.UndoButton.Enabled = true;
-                    }
-                    else
-                    {
-                        if ((Program.ChessBoard.Game.Moves.Count == 0) || (Program.ChessBoard.Game.Moves.Count == 1 && Program.ChessBoard.Game.Player1.IsAI))
-                            Program.ChessBoard.UndoButton.Enabled = false;
-                        else
-                            Program.ChessBoard.UndoButton.Enabled = true;
-                    }
+                    game.UpdateTurnControls();
                 }
                 else //Select different piece
                 {
-                    //Capture
-                    if (board.SelectedCell != null && board.SelectedCell.Piece!= null && selectedPiece != null)
-                        board.SelectedCell.Piece.Capture(selectedPiece);
+                    Piece? movingPiece = board.SelectedCell?.Piece;
+                    if (movingPiece == null || movingPiece.Side != game.CurrentPlayer.Side
+                        || !board.FindLegalMoves(movingPiece).Any(move => move.CapturedPiece == selectedPiece))
+                        return;
 
-                    if (Program.ChessBoard.Game.Status != Game.GameStatus.Ended)
-                    {
-                        //Switch turn
-                        Program.ChessBoard.Game.SwitchTurn();
-
-                        //Enable all the pieces of the current player and disable all the pieces of the opposite side
-                        foreach (Cell cell in board.Cells)
-                        {
-                            if (cell.Piece != null)
-                            {
-                                if (cell.Piece.Side == Program.ChessBoard.Game.CurrentPlayer.Side)
-                                    cell.Piece.Image.Enabled = true;
-                                else
-                                    cell.Piece.Image.Enabled = false;
-                            }
-                        }
-                    }
+                    movingPiece.Capture(selectedPiece);
+                    if (game.Status == Game.GameStatus.Started)
+                        game.SwitchTurn();
+                    game.UpdateTurnControls();
                 }
             }
         }
@@ -221,12 +205,11 @@
             //Create the move
             Move move = new Move(rank, file, row, column, this);
             
-            //Perform the move
-            board.DoMove(move);
-
-            //Add to moves list
+            //Record the move before it can end the game and display the result.
             if (Program.ChessBoard != null && Program.ChessBoard.Game != null)
                 Program.ChessBoard.Game.Moves.Add(move);
+
+            board.DoMove(move);
         }
 
         public void Capture(Piece piece)
@@ -234,12 +217,11 @@
             //Create the move
             Move move = new Move(rank, file, piece.Rank, piece.File, this, piece);
             
-            //Perform the move
-            board.DoMove(move);
-
-            //Add to moves list
+            //Record the move before it can end the game and display the result.
             if (Program.ChessBoard != null && Program.ChessBoard.Game != null)
                 Program.ChessBoard.Game.Moves.Add(move);
+
+            board.DoMove(move);
         }
         #endregion
     }

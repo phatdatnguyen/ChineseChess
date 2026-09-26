@@ -61,27 +61,20 @@
         #region Method
         private void PossibleMoveIndicator_MouseClick(object? sender, MouseEventArgs e)
         {
-            if (Program.ChessBoard == null || Program.ChessBoard.Game == null)
+            Game? game = Program.ChessBoard?.Game;
+            Piece? selectedPiece = board.SelectedCell?.Piece;
+            if (e.Button != MouseButtons.Left || game == null || game.Status != Game.GameStatus.Started
+                || game.CurrentPlayer.IsAI || selectedPiece == null || selectedPiece.Side != game.CurrentPlayer.Side)
                 return;
 
-            //Move
-            if (board.SelectedCell != null && board.SelectedCell.Piece != null)
-            board.SelectedCell.Piece.Move(row, column);
-            
-            //Switch turn
-            Program.ChessBoard.Game.SwitchTurn();
+            if (!board.FindLegalMoves(selectedPiece).Any(move => move.EndRow == row
+                && move.EndColumn == column && move.CapturedPiece == null))
+                return;
 
-            //Enable all the pieces of the current player and disable all the pieces of the opponent
-            foreach (Cell cell in board.Cells)
-            {
-                if (cell.Piece != null)
-                {
-                    if (cell.Piece.Side == Program.ChessBoard.Game.CurrentPlayer.Side)
-                        cell.Piece.Image.Enabled = true;
-                    else
-                        cell.Piece.Image.Enabled = false;
-                }
-            }
+            selectedPiece.Move(row, column);
+            if (game.Status == Game.GameStatus.Started)
+                game.SwitchTurn();
+            game.UpdateTurnControls();
         }
         #endregion
     }

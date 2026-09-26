@@ -1,6 +1,6 @@
 ﻿namespace ChineseChess
 {
-    public class Board
+    public class Board : IDisposable
     {
         #region Enums
         public enum Side { Red, Blue }
@@ -9,6 +9,7 @@
         #region Fields
         private readonly Panel boardPanel;
         private readonly Cell[,] cells;
+        private readonly HashSet<Piece> ownedPieces = new();
         private Cell? selectedCell;
         #endregion
 
@@ -46,6 +47,7 @@
         #region Methods
         private void Clear()
         {
+            DisposeControls();
             boardPanel.Controls.Clear();
             for (int i = 0; i < 10; i++)
                 for (int j = 0; j < 9; j++)
@@ -53,6 +55,23 @@
                     cells[i, j] = new Cell(this, i, j);
                     boardPanel.Controls.Add(cells[i, j].PossibleMoveIndicator);
                 }
+            selectedCell = null;
+        }
+
+        private void DisposeControls()
+        {
+            // Captured pieces are detached from the panel but remain alive for undo.
+            foreach (Piece piece in ownedPieces)
+                piece.Image.Dispose();
+            ownedPieces.Clear();
+
+            foreach (Cell? cell in cells)
+                cell?.PossibleMoveIndicator.Dispose();
+        }
+
+        public void Dispose()
+        {
+            DisposeControls();
             selectedCell = null;
         }
 
@@ -101,6 +120,7 @@
         {
             if (piece != null)
             {
+                ownedPieces.Add(piece);
                 cells[piece.Rank, piece.File].Piece = piece;
                 boardPanel.Controls.Add(piece.Image);
             }
@@ -157,18 +177,8 @@
                 move.Piece.Image.Invalidate();
                 move.Piece.Image.Update();
 
-                //Enable undo button
-                if (Program.ChessBoard != null && Program.ChessBoard.Game != null && (Program.ChessBoard.Game.Type == Game.GameType.TwoPlayers || Program.ChessBoard.Game.Type == Game.GameType.TwoPlayersHandicap))
-                {
-                    Program.ChessBoard.UndoButton.Enabled = true;
-                }
-                else
-                {
-                    if (Program.ChessBoard != null && Program.ChessBoard.Game != null && (Program.ChessBoard.Game.CurrentPlayer.IsAI && Program.ChessBoard.Game.Moves.Count > 0))
-                        Program.ChessBoard.UndoButton.Enabled = true;
-                    else if (Program.ChessBoard != null)
-                        Program.ChessBoard.UndoButton.Enabled = false;
-                }
+                if (Program.ChessBoard != null)
+                    Program.ChessBoard.UndoButton.Enabled = Program.ChessBoard.Game?.CanUndo == true;
 
                 //Check whether a check is delivered
                 if (Program.ChessBoard != null && IsCheckDelivered(move.Piece.Side))
@@ -179,8 +189,6 @@
                 //Check end game
                 if (Program.ChessBoard != null && Program.ChessBoard.Game != null && move.CapturedPiece != null && move.CapturedPiece.GetType() == typeof(General))
                 {
-                    Program.ChessBoard.Game.Status = Game.GameStatus.Ended;
-                    Program.ChessBoard.UndoButton.Enabled = true;
                     Program.ChessBoard.Game.End(move.Piece.Side);
                 }
             }
@@ -218,8 +226,13 @@
             if (!isTestMove)
             {
                 //Deselect
+                if (selectedCell?.Piece != null)
+                    selectedCell.Piece.IsSelected = false;
                 move.Piece.IsSelected = false;
                 selectedCell = null;
+
+                foreach (Cell cell in cells)
+                    cell.PossibleMoveIndicator.Visible = false;
 
                 //Position the images
                 move.Piece.Image.Top = move.Piece.Rank * Board.VerticalCellDistance + Board.PaddingTop;
@@ -241,18 +254,76 @@
         public List<Move> FindPossibleMoves(Side side)
         {
             List<Move> possibleMoves = new();
+            Piece? general = FindGeneral(side);
+            if (general == null)
+                return possibleMoves;
 
             foreach (Cell cell in cells)
             {
                 if (cell.Piece != null && cell.Piece.Side == side)
                 {
-                    List<Move> moves = cell.Piece.FindPossibleMoves();
-                    foreach (Move move in moves)
-                        possibleMoves.Add(move);
+                    foreach (Move move in cell.Piece.FindPossibleMoves())
+                    {
+                        if (IsLegalMove(move, general))
+                            possibleMoves.Add(move);
+                    }
                 }
             }
 
             return possibleMoves;
+        }
+
+        public bool HasLegalMoves(Side side)
+        {
+            Piece? general = FindGeneral(side);
+            if (general == null)
+                return false;
+
+            foreach (Cell cell in cells)
+            {
+                if (cell.Piece != null && cell.Piece.Side == side)
+                {
+                    foreach (Move move in cell.Piece.FindPossibleMoves())
+                    {
+                        if (IsLegalMove(move, general))
+                            return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public List<Move> FindLegalMoves(Piece piece)
+        {
+            List<Move> legalMoves = new();
+            if (piece.IsCaptured || cells[piece.Rank, piece.File].Piece != piece)
+                return legalMoves;
+
+            Piece? general = FindGeneral(piece.Side);
+            if (general == null)
+                return legalMoves;
+
+            foreach (Move move in piece.FindPossibleMoves())
+            {
+                if (IsLegalMove(move, general))
+                    legalMoves.Add(move);
+            }
+
+            return legalMoves;
+        }
+
+        private bool IsLegalMove(Move move, Piece general)
+        {
+            Side opponent = move.Piece.Side == Side.Red ? Side.Blue : Side.Red;
+            DoMove(move, true);
+            try
+            {
+                return !IsGeneralAttacked(general, opponent);
+            }
+            finally
+            {
+                UndoMove(move, true);
+            }
         }
                 
         public int Evaluate(Side side)
@@ -275,24 +346,97 @@
 
         public bool IsCheckDelivered(Side side)
         {
+            Piece? general = FindGeneral(side == Side.Red ? Side.Blue : Side.Red);
+            return general != null && IsGeneralAttacked(general, side);
+        }
+
+        private Piece? FindGeneral(Side side)
+        {
             foreach (Cell cell in cells)
             {
-                if (cell.Piece != null && cell.Piece.Side == side)
+                if (cell.Piece is General && cell.Piece.Side == side)
+                    return cell.Piece;
+            }
+            return null;
+        }
+
+        private bool IsGeneralAttacked(Piece general, Side attackingSide)
+        {
+            // Test attacks directly, without legal-move recursion or allocating a
+            // move list for every enemy piece at every node of the AI search.
+            foreach (Cell cell in cells)
+            {
+                Piece? attacker = cell.Piece;
+                if (attacker == null || attacker.Side != attackingSide)
+                    continue;
+
+                int rowDistance = general.Rank - attacker.Rank;
+                int columnDistance = general.File - attacker.File;
+                int rows = Math.Abs(rowDistance);
+                int columns = Math.Abs(columnDistance);
+
+                switch (attacker)
                 {
-                    if (cell.Piece.GetType() == typeof(Chariot) || cell.Piece.GetType() == typeof(Cannon) ||
-                        cell.Piece.GetType() == typeof(Horse) || cell.Piece.GetType() == typeof(Soldier))
-                    {
-                        List<Move> moves = cell.Piece.FindPossibleMoves();
-                        foreach (Move move in moves)
-                        {
-                            if (move.CapturedPiece != null && move.CapturedPiece.GetType() == typeof(General))
-                                return true;
-                        }
-                    }
+                    case Chariot:
+                    case Cannon:
+                        if (rows != 0 && columns != 0)
+                            break;
+                        int screens = CountPiecesBetween(attacker, general);
+                        if (screens == (attacker is Cannon ? 1 : 0))
+                            return true;
+                        break;
+                    case General:
+                        if (columns == 0 && CountPiecesBetween(attacker, general) == 0)
+                            return true;
+                        if (rows + columns == 1 && IsInPalace(general.Rank, general.File, attackingSide))
+                            return true;
+                        break;
+                    case Horse:
+                        if (((rows == 2 && columns == 1) || (rows == 1 && columns == 2)) &&
+                            cells[attacker.Rank + rowDistance / 2, attacker.File + columnDistance / 2].Piece == null)
+                            return true;
+                        break;
+                    case Soldier:
+                        if (columnDistance == 0 && rowDistance == (attackingSide == Side.Blue ? 1 : -1))
+                            return true;
+                        bool crossedRiver = attackingSide == Side.Blue ? attacker.Rank >= 5 : attacker.Rank <= 4;
+                        if (crossedRiver && rows == 0 && columns == 1)
+                            return true;
+                        break;
+                    case Advisor:
+                        if (rows == 1 && columns == 1 && IsInPalace(general.Rank, general.File, attackingSide))
+                            return true;
+                        break;
+                    case Elephant:
+                        bool onOwnSide = attackingSide == Side.Blue ? general.Rank <= 4 : general.Rank >= 5;
+                        if (rows == 2 && columns == 2 && onOwnSide &&
+                            cells[attacker.Rank + rowDistance / 2, attacker.File + columnDistance / 2].Piece == null)
+                            return true;
+                        break;
                 }
             }
-
             return false;
+        }
+
+        private static bool IsInPalace(int row, int column, Side side)
+        {
+            return column >= 3 && column <= 5 &&
+                (side == Side.Blue ? row >= 0 && row <= 2 : row >= 7 && row <= 9);
+        }
+
+        private int CountPiecesBetween(Piece start, Piece end)
+        {
+            int rowStep = Math.Sign(end.Rank - start.Rank);
+            int columnStep = Math.Sign(end.File - start.File);
+            int count = 0;
+            for (int row = start.Rank + rowStep, column = start.File + columnStep;
+                row != end.Rank || column != end.File;
+                row += rowStep, column += columnStep)
+            {
+                if (cells[row, column].Piece != null)
+                    count++;
+            }
+            return count;
         }
         #endregion
     }

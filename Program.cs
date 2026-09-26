@@ -2,7 +2,8 @@
 {
     static class Program
     {
-        public static Main ChessBoard;
+        // Assigned during startup before the form begins processing events.
+        public static Main ChessBoard = null!;
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
